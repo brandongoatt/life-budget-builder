@@ -4,7 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Home, Car, GraduationCap, MapPin } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { Home, Car, GraduationCap, MapPin, Calculator, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { 
+  calculateRentImpact, 
+  calculateCarImpact, 
+  calculateEducationImpact, 
+  calculateMovingImpact 
+} from "@/components/DecisionHelpers";
 
 interface BudgetData {
   monthlyIncome: number;
@@ -19,11 +28,15 @@ interface DecisionCalculatorProps {
 
 type DecisionType = "rent" | "car" | "education" | "moving";
 
-interface DecisionData {
-  type: DecisionType;
-  amount: number;
-  monthlyPayment?: number;
-  duration?: number;
+interface AnalysisResult {
+  affordability: "excellent" | "good" | "caution" | "high-risk";
+  impact: string;
+  recommendation: string;
+  monthlyImpact: number;
+  savingsImpact: number;
+  timeToRecover?: number;
+  alternatives?: string[];
+  riskLevel: number;
 }
 
 export const DecisionCalculator = ({ budget }: DecisionCalculatorProps) => {
@@ -31,66 +44,59 @@ export const DecisionCalculator = ({ budget }: DecisionCalculatorProps) => {
   const [amount, setAmount] = useState("");
   const [monthlyPayment, setMonthlyPayment] = useState("");
   const [duration, setDuration] = useState("");
-  const [result, setResult] = useState<any>(null);
+  const [downPayment, setDownPayment] = useState("");
+  const [result, setResult] = useState<AnalysisResult | null>(null);
+  const { toast } = useToast();
 
   const decisionTypes = [
-    { value: "rent", label: "Rent/Housing", icon: Home },
-    { value: "car", label: "Car Purchase", icon: Car },
-    { value: "education", label: "Education", icon: GraduationCap },
-    { value: "moving", label: "Moving Cities", icon: MapPin },
+    { value: "rent", label: "Housing & Rent", icon: Home, description: "Analyze rental costs and housing decisions" },
+    { value: "car", label: "Vehicle Purchase", icon: Car, description: "Evaluate car loans and transportation costs" },
+    { value: "education", label: "Education Investment", icon: GraduationCap, description: "Assess education costs and ROI" },
+    { value: "moving", label: "Relocation", icon: MapPin, description: "Calculate moving and living cost changes" },
   ];
 
+  const disposableIncome = budget.monthlyIncome - budget.monthlyExpenses;
+
   const calculateImpact = () => {
-    const disposableIncome = budget.monthlyIncome - budget.monthlyExpenses;
+    if (!amount && !monthlyPayment) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter the required financial details.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const amountNum = parseFloat(amount) || 0;
     const monthlyNum = parseFloat(monthlyPayment) || 0;
     const durationNum = parseFloat(duration) || 1;
+    const downPaymentNum = parseFloat(downPayment) || 0;
 
-    let analysis = {
-      affordability: "unknown",
+    let analysis: AnalysisResult = {
+      affordability: "good",
       impact: "",
       recommendation: "",
       monthlyImpact: 0,
       savingsImpact: 0,
+      riskLevel: 0,
     };
 
     if (selectedDecision === "rent") {
-      analysis.monthlyImpact = amountNum;
-      analysis.savingsImpact = (disposableIncome - amountNum) * 12;
-      
-      if (amountNum <= disposableIncome * 0.3) {
-        analysis.affordability = "good";
-        analysis.impact = "Low impact on your budget";
-        analysis.recommendation = "This housing cost is within recommended limits (30% of income).";
-      } else if (amountNum <= disposableIncome * 0.5) {
-        analysis.affordability = "caution";
-        analysis.impact = "Moderate impact on your budget";
-        analysis.recommendation = "This will stretch your budget. Consider if the location/amenities justify the cost.";
-      } else {
-        analysis.affordability = "high-risk";
-        analysis.impact = "High impact on your budget";
-        analysis.recommendation = "This housing cost is too high for your current income. Look for alternatives.";
-      }
+      analysis = calculateRentImpact(amountNum, disposableIncome, budget.monthlyIncome);
     } else if (selectedDecision === "car") {
-      analysis.monthlyImpact = monthlyNum;
-      analysis.savingsImpact = (disposableIncome - monthlyNum) * 12;
-      
-      if (monthlyNum <= disposableIncome * 0.15) {
-        analysis.affordability = "good";
-        analysis.impact = "Manageable monthly payment";
-        analysis.recommendation = "This car payment fits well within your budget.";
-      } else if (monthlyNum <= disposableIncome * 0.25) {
-        analysis.affordability = "caution";
-        analysis.impact = "Notable monthly commitment";
-        analysis.recommendation = "Consider if you need all the features or if a less expensive option would work.";
-      } else {
-        analysis.affordability = "high-risk";
-        analysis.impact = "Heavy monthly burden";
-        analysis.recommendation = "This payment is too high. Consider used cars or public transportation.";
-      }
+      analysis = calculateCarImpact(amountNum, monthlyNum, downPaymentNum, disposableIncome, budget.savings);
+    } else if (selectedDecision === "education") {
+      analysis = calculateEducationImpact(amountNum, durationNum, disposableIncome, budget.savings);
+    } else if (selectedDecision === "moving") {
+      analysis = calculateMovingImpact(amountNum, monthlyNum, budget.monthlyExpenses, disposableIncome, budget.savings);
     }
 
     setResult(analysis);
+    
+    toast({
+      title: "Analysis Complete",
+      description: `Your ${decisionTypes.find(t => t.value === selectedDecision)?.label.toLowerCase()} analysis is ready.`,
+    });
   };
 
   const getAffordabilityColor = (affordability: string) => {
