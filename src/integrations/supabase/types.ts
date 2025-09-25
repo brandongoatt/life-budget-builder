@@ -14,7 +14,166 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_conversations: {
+        Row: {
+          created_at: string | null
+          id: string
+          title: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string | null
+          id: string
+          role: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string | null
+          id?: string
+          role: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string | null
+          id?: string
+          role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "ai_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      budgets: {
+        Row: {
+          created_at: string | null
+          emergency_fund: number
+          id: string
+          is_active: boolean | null
+          monthly_expenses: number
+          monthly_income: number
+          savings: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          emergency_fund: number
+          id?: string
+          is_active?: boolean | null
+          monthly_expenses: number
+          monthly_income: number
+          savings: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          emergency_fund?: number
+          id?: string
+          is_active?: boolean | null
+          monthly_expenses?: number
+          monthly_income?: number
+          savings?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      decisions: {
+        Row: {
+          analysis_result: Json
+          budget_id: string
+          created_at: string | null
+          decision_data: Json
+          decision_type: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          analysis_result: Json
+          budget_id: string
+          created_at?: string | null
+          decision_data: Json
+          decision_type: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          analysis_result?: Json
+          budget_id?: string
+          created_at?: string | null
+          decision_data?: Json
+          decision_type?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decisions_budget_id_fkey"
+            columns: ["budget_id"]
+            isOneToOne: false
+            referencedRelation: "budgets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          email: string | null
+          id: string
+          subscription_tier: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          subscription_tier?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          subscription_tier?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
