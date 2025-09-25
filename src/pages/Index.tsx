@@ -1,8 +1,18 @@
-import { useState } from "react";
-import { BudgetOverview } from "@/components/BudgetOverview";
-import { BudgetForm } from "@/components/BudgetForm";
-import { DecisionCalculator } from "@/components/DecisionCalculator";
-import heroImage from "@/assets/hero-image.jpg";
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import Navigation from '@/components/Navigation';
+import { BudgetForm } from '@/components/BudgetForm';
+import { BudgetOverview } from '@/components/BudgetOverview';
+import { DecisionCalculator } from '@/components/DecisionCalculator';
+import PremiumUpgrade from '@/components/PremiumUpgrade';
+import AIChat from '@/components/AIChat';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { TrendingUp, Shield, Calculator, MessageCircle, DollarSign, Target, BarChart3, Users } from 'lucide-react';
+import heroImage from '@/assets/hero-image.jpg';
 
 interface BudgetData {
   monthlyIncome: number;
@@ -11,38 +21,144 @@ interface BudgetData {
   emergencyFund: number;
 }
 
+interface UserProfile {
+  subscription_tier: string;
+  display_name?: string;
+}
+
 const Index = () => {
-  const [budget, setBudget] = useState<BudgetData>({
-    monthlyIncome: 0,
-    monthlyExpenses: 0,
-    savings: 0,
-    emergencyFund: 0,
-  });
-
+  const { user, loading } = useAuth();
+  const { toast } = useToast();
+  const [budget, setBudget] = useState<BudgetData | null>(null);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loadingBudget, setLoadingBudget] = useState(false);
 
-  const handleBudgetUpdate = (newBudget: BudgetData) => {
-    setBudget(newBudget);
-    setShowCalculator(true);
+  // Load user profile and budget data
+  useEffect(() => {
+    if (user) {
+      loadUserProfile();
+      loadUserBudget();
+    } else {
+      setBudget(null);
+      setShowCalculator(false);
+      setUserProfile(null);
+    }
+  }, [user]);
+
+  const loadUserProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('subscription_tier, display_name')
+        .eq('user_id', user!.id)
+        .single();
+
+      if (error) throw error;
+      setUserProfile(data);
+    } catch (error) {
+      console.error('Error loading profile:', error);
+    }
   };
+
+  const loadUserBudget = async () => {
+    setLoadingBudget(true);
+    try {
+      const { data, error } = await supabase
+        .from('budgets')
+        .select('*')
+        .eq('user_id', user!.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data) {
+        setBudget({
+          monthlyIncome: Number(data.monthly_income),
+          monthlyExpenses: Number(data.monthly_expenses),
+          savings: Number(data.savings),
+          emergencyFund: Number(data.emergency_fund)
+        });
+        setShowCalculator(true);
+      }
+    } catch (error) {
+      console.error('Error loading budget:', error);
+    } finally {
+      setLoadingBudget(false);
+    }
+  };
+
+  const handleBudgetUpdate = async (newBudget: BudgetData) => {
+    if (!user) {
+      // For guests, just update local state
+      setBudget(newBudget);
+      setShowCalculator(true);
+      toast({
+        title: "Budget updated!",
+        description: "Sign in to save your data permanently.",
+      });
+      return;
+    }
+
+    try {
+      // Deactivate old budgets
+      await supabase
+        .from('budgets')
+        .update({ is_active: false })
+        .eq('user_id', user.id);
+
+      // Insert new budget
+      const { error } = await supabase
+        .from('budgets')
+        .insert({
+          user_id: user.id,
+          monthly_income: newBudget.monthlyIncome,
+          monthly_expenses: newBudget.monthlyExpenses,
+          savings: newBudget.savings,
+          emergency_fund: newBudget.emergencyFund,
+          is_active: true
+        });
+
+      if (error) throw error;
+
+      setBudget(newBudget);
+      setShowCalculator(true);
+
+      toast({
+        title: "Budget saved!",
+        description: "Your budget data has been securely saved.",
+      });
+    } catch (error) {
+      console.error('Error saving budget:', error);
+      toast({
+        title: "Error saving budget",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handlePremiumUpgrade = () => {
+    loadUserProfile(); // Reload profile to get updated subscription tier
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      {/* Header */}
-      <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur-sm shadow-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-primary">Smart Budget Decisions</h1>
-              <p className="text-sm text-muted-foreground">Make informed decisions about major life purchases</p>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <div className="w-2 h-2 bg-success rounded-full animate-pulse"></div>
-              <span>Real-time Analysis</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navigation userProfile={userProfile} />
 
       {/* Hero Section */}
       <section className="relative py-8 sm:py-16 overflow-hidden">
@@ -53,51 +169,55 @@ const Index = () => {
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
                   <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                  Free Financial Analysis
+                  {user ? (userProfile?.subscription_tier === 'premium' ? 'Premium AI Advisor' : 'Free Analysis + Premium Available') : 'Free Financial Analysis'}
                 </div>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
-                  Make Smart Financial
-                  <span className="text-primary"> Life Decisions</span>
-                </h2>
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
+                  Smart Financial
+                  <span className="text-primary"> Decision Tool</span>
+                </h1>
                 <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-                  Get instant analysis on housing, cars, education, and relocation decisions. 
-                  Understand the real impact on your budget with comprehensive risk assessment.
+                  Make informed choices about housing, cars, education, and major life changes with {user && userProfile?.subscription_tier === 'premium' ? 'AI-powered insights and' : ''} personalized recommendations.
                 </p>
               </div>
               
+              {user && userProfile?.subscription_tier === 'premium' && (
+                <div className="flex items-center space-x-2 mb-4">
+                  <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
+                    Premium Member
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">AI advisor included</span>
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-3 sm:gap-4">
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border">
-                  <div className="w-3 h-3 bg-primary rounded-full"></div>
-                  <span className="text-sm font-medium">Housing Analysis</span>
+                  <Calculator className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">Budget Analysis</span>
                 </div>
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border">
-                  <div className="w-3 h-3 bg-secondary rounded-full"></div>
-                  <span className="text-sm font-medium">Vehicle Finance</span>
+                  <TrendingUp className="w-4 h-4 text-secondary" />
+                  <span className="text-sm font-medium">Smart Recommendations</span>
                 </div>
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border">
-                  <div className="w-3 h-3 bg-accent rounded-full"></div>
-                  <span className="text-sm font-medium">Education ROI</span>
+                  <Shield className="w-4 h-4 text-accent" />
+                  <span className="text-sm font-medium">{user ? 'Secure Data Storage' : 'Privacy Protected'}</span>
                 </div>
                 <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border">
-                  <div className="w-3 h-3 bg-warning rounded-full"></div>
-                  <span className="text-sm font-medium">Relocation Cost</span>
+                  <MessageCircle className="w-4 h-4 text-warning" />
+                  <span className="text-sm font-medium">AI Financial Advisor</span>
                 </div>
               </div>
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-1.5 h-1.5 bg-success rounded-full"></div>
-                  <span>Instant Results</span>
+              {!user && (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button asChild size="lg" className="flex-1">
+                    <a href="/auth">Sign Up Free</a>
+                  </Button>
+                  <Button variant="outline" size="lg" className="flex-1">
+                    Try Demo Below
+                  </Button>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-1.5 h-1.5 bg-success rounded-full"></div>
-                  <span>Risk Assessment</span>
-                </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className="w-1.5 h-1.5 bg-success rounded-full"></div>
-                  <span>Alternative Options</span>
-                </div>
-              </div>
+              )}
             </div>
             
             <div className="relative order-first lg:order-last">
@@ -115,30 +235,174 @@ const Index = () => {
       </section>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 sm:py-8 space-y-8">
-        {/* Budget Overview */}
-        {showCalculator && (
-          <BudgetOverview budget={budget} />
-        )}
+      <main className="container mx-auto px-4 py-6 sm:py-8">
+        {!user ? (
+          /* Guest Experience */
+          <div className="space-y-8">
+            {/* Social Proof */}
+            <div className="text-center py-8">
+              <div className="flex justify-center items-center gap-8 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Users className="w-4 h-4" />
+                  <span>10,000+ users</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4" />
+                  <span>50,000+ decisions analyzed</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Shield className="w-4 h-4" />
+                  <span>Bank-level security</span>
+                </div>
+              </div>
+            </div>
 
-        {/* Budget Form */}
-        <BudgetForm 
-          onBudgetUpdate={handleBudgetUpdate} 
-          initialBudget={budget}
-        />
+            {/* Sign Up CTA */}
+            <Card className="max-w-2xl mx-auto border-2 border-dashed border-primary/20">
+              <CardHeader className="text-center">
+                <CardTitle className="text-2xl">Get Started Today</CardTitle>
+                <CardDescription>
+                  Sign up to save your budget data, access premium AI features, and track your financial progress over time.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid sm:grid-cols-3 gap-4 mb-6">
+                  <div className="text-center">
+                    <DollarSign className="w-8 h-8 text-primary mx-auto mb-2" />
+                    <h4 className="font-medium">Budget Tracking</h4>
+                    <p className="text-xs text-muted-foreground">Save and track your financial data</p>
+                  </div>
+                  <div className="text-center">
+                    <Target className="w-8 h-8 text-primary mx-auto mb-2" />
+                    <h4 className="font-medium">Decision History</h4>
+                    <p className="text-xs text-muted-foreground">Track all your financial decisions</p>
+                  </div>
+                  <div className="text-center">
+                    <MessageCircle className="w-8 h-8 text-primary mx-auto mb-2" />
+                    <h4 className="font-medium">AI Advisor</h4>
+                    <p className="text-xs text-muted-foreground">Get personalized advice</p>
+                  </div>
+                </div>
+                <Button asChild className="w-full" size="lg">
+                  <a href="/auth">Sign Up Free</a>
+                </Button>
+              </CardContent>
+            </Card>
 
-        {/* Decision Calculator */}
-        {showCalculator && (
-          <DecisionCalculator budget={budget} />
+            {/* Demo Form */}
+            <div className="max-w-4xl mx-auto">
+              <div className="text-center mb-6">
+                <h3 className="text-xl font-semibold mb-2">Try the Calculator (Demo Mode)</h3>
+                <p className="text-muted-foreground">Experience our financial analysis tool - no account required</p>
+              </div>
+              
+              <div className="grid lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
+                  {showCalculator && budget && (
+                    <BudgetOverview budget={budget} />
+                  )}
+                  
+                  <BudgetForm 
+                    onBudgetUpdate={handleBudgetUpdate} 
+                    initialBudget={budget || undefined}
+                  />
+                  
+                  {showCalculator && budget && (
+                    <DecisionCalculator budget={budget} />
+                  )}
+                </div>
+                
+                <div>
+                  <PremiumUpgrade />
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
+          /* Authenticated User Experience */
+          <div className="grid lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
+              {loadingBudget ? (
+                <Card>
+                  <CardContent className="flex items-center justify-center py-8">
+                    <div className="text-center">
+                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                      <p className="text-sm text-muted-foreground">Loading your budget...</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <>
+                  {showCalculator && budget && (
+                    <BudgetOverview budget={budget} />
+                  )}
+                  
+                  <BudgetForm 
+                    onBudgetUpdate={handleBudgetUpdate} 
+                    initialBudget={budget || undefined}
+                  />
+                  
+                  {showCalculator && budget && (
+                    <DecisionCalculator budget={budget} />
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="space-y-6">
+              {/* Premium Features */}
+              {userProfile?.subscription_tier === 'premium' ? (
+                <AIChat budgetData={budget} />
+              ) : (
+                <PremiumUpgrade onUpgrade={handlePremiumUpgrade} />
+              )}
+
+              {/* How It Works */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">How It Works</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-primary">1</span>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm">Enter Your Budget</h4>
+                      <p className="text-xs text-muted-foreground">Your data is securely saved for future use</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-primary">2</span>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm">Analyze Decisions</h4>
+                      <p className="text-xs text-muted-foreground">Get instant affordability insights</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start space-x-3">
+                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-primary">3</span>
+                    </div>
+                    <div>
+                      <h4 className="font-medium text-sm">Get AI Advice</h4>
+                      <p className="text-xs text-muted-foreground">Chat with AI for personalized guidance</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         )}
 
         {/* Features Section */}
         {!showCalculator && (
-          <section className="py-8 sm:py-12">
+          <section className="py-8 sm:py-12 mt-16">
             <div className="text-center mb-8 sm:mb-12">
-              <h3 className="text-2xl sm:text-3xl font-bold mb-4">How It Works</h3>
+              <h3 className="text-2xl sm:text-3xl font-bold mb-4">Comprehensive Financial Analysis</h3>
               <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base">
-                Get comprehensive financial analysis in four simple steps. Make better decisions with data-driven insights.
+                Get data-driven insights for major life decisions. Our tool analyzes your complete financial picture.
               </p>
             </div>
             
@@ -192,10 +456,13 @@ const Index = () => {
         <div className="container mx-auto px-4 py-6 sm:py-8">
           <div className="text-center space-y-2">
             <p className="text-sm text-muted-foreground">
-              &copy; 2024 Smart Budget Decisions. Empowering informed financial choices.
+              &copy; 2024 Smart Financial Decision Tool. Empowering informed financial choices.
             </p>
             <p className="text-xs text-muted-foreground">
-              Free financial analysis tool for major life decisions
+              {user && userProfile?.subscription_tier === 'premium' ? 
+                'Premium AI-powered financial analysis' : 
+                'Free financial analysis tool with premium AI features available'
+              }
             </p>
           </div>
         </div>
