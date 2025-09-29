@@ -1,474 +1,215 @@
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
-import Navigation from '@/components/Navigation';
-import { BudgetForm } from '@/components/BudgetForm';
-import { BudgetOverview } from '@/components/BudgetOverview';
-import { DecisionCalculator } from '@/components/DecisionCalculator';
-import PremiumUpgrade from '@/components/PremiumUpgrade';
-import AIChat from '@/components/AIChat';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { useToast } from '@/hooks/use-toast';
-import { TrendingUp, Shield, Calculator, MessageCircle, DollarSign, Target, BarChart3, Users } from 'lucide-react';
-import heroImage from '@/assets/hero-image.jpg';
+import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Calculator, TrendingUp, DollarSign, PiggyBank, Brain, Shield, LogIn, Users, BarChart3, Target, MessageCircle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate, Link } from "react-router-dom";
+import heroImage from "@/assets/hero-image.jpg";
 
-interface BudgetData {
-  monthlyIncome: number;
-  monthlyExpenses: number;
-  savings: number;
-  emergencyFund: number;
-}
+export default function Index() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
-interface UserProfile {
-  subscription_tier: string;
-  display_name?: string;
-}
-
-const Index = () => {
-  const { user, loading } = useAuth();
-  const { toast } = useToast();
-  const [budget, setBudget] = useState<BudgetData | null>(null);
-  const [showCalculator, setShowCalculator] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [loadingBudget, setLoadingBudget] = useState(false);
-
-  // Load user profile and budget data
   useEffect(() => {
     if (user) {
-      loadUserProfile();
-      loadUserBudget();
-    } else {
-      setBudget(null);
-      setShowCalculator(false);
-      setUserProfile(null);
+      navigate('/dashboard');
     }
-  }, [user]);
+  }, [user, navigate]);
 
-  const loadUserProfile = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('subscription_tier, display_name')
-        .eq('user_id', user!.id)
-        .single();
-
-      if (error) throw error;
-      setUserProfile(data);
-    } catch (error) {
-      console.error('Error loading profile:', error);
+  const features = [
+    {
+      icon: Calculator,
+      title: "Budget Analysis",
+      description: "Comprehensive analysis of your financial health"
+    },
+    {
+      icon: TrendingUp,
+      title: "Smart Recommendations",
+      description: "AI-powered insights for better decisions"
+    },
+    {
+      icon: Shield,
+      title: "Secure & Private",
+      description: "Bank-level security for your data"
+    },
+    {
+      icon: Brain,
+      title: "AI Financial Advisor",
+      description: "Personal AI assistant for financial guidance"
     }
-  };
-
-  const loadUserBudget = async () => {
-    setLoadingBudget(true);
-    try {
-      const { data, error } = await supabase
-        .from('budgets')
-        .select('*')
-        .eq('user_id', user!.id)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) throw error;
-
-      if (data) {
-        setBudget({
-          monthlyIncome: Number(data.monthly_income),
-          monthlyExpenses: Number(data.monthly_expenses),
-          savings: Number(data.savings),
-          emergencyFund: Number(data.emergency_fund)
-        });
-        setShowCalculator(true);
-      }
-    } catch (error) {
-      console.error('Error loading budget:', error);
-    } finally {
-      setLoadingBudget(false);
-    }
-  };
-
-  const handleBudgetUpdate = async (newBudget: BudgetData) => {
-    if (!user) {
-      // For guests, just update local state
-      setBudget(newBudget);
-      setShowCalculator(true);
-      toast({
-        title: "Budget updated!",
-        description: "Sign in to save your data permanently.",
-      });
-      return;
-    }
-
-    try {
-      // Deactivate old budgets
-      await supabase
-        .from('budgets')
-        .update({ is_active: false })
-        .eq('user_id', user.id);
-
-      // Insert new budget
-      const { error } = await supabase
-        .from('budgets')
-        .insert({
-          user_id: user.id,
-          monthly_income: newBudget.monthlyIncome,
-          monthly_expenses: newBudget.monthlyExpenses,
-          savings: newBudget.savings,
-          emergency_fund: newBudget.emergencyFund,
-          is_active: true
-        });
-
-      if (error) throw error;
-
-      setBudget(newBudget);
-      setShowCalculator(true);
-
-      toast({
-        title: "Budget saved!",
-        description: "Your budget data has been securely saved.",
-      });
-    } catch (error) {
-      console.error('Error saving budget:', error);
-      toast({
-        title: "Error saving budget",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handlePremiumUpgrade = () => {
-    loadUserProfile(); // Reload profile to get updated subscription tier
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <Navigation userProfile={userProfile} />
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      {/* Header */}
+      <header className="relative z-10 px-6 py-4">
+        <nav className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center space-x-2">
+            <Calculator className="h-8 w-8 text-purple-400" />
+            <span className="text-2xl font-bold text-white">FinanceAI</span>
+          </div>
+          <div className="flex gap-4">
+            <Button 
+              variant="outline" 
+              className="text-white border-white hover:bg-white hover:text-purple-900"
+              asChild
+            >
+              <Link to="/auth">
+                <LogIn className="w-4 h-4 mr-2" />
+                Sign In
+              </Link>
+            </Button>
+          </div>
+        </nav>
+      </header>
 
       {/* Hero Section */}
-      <section className="relative py-8 sm:py-16 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5"></div>
-        <div className="container mx-auto px-4 relative">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <div className="space-y-6 lg:space-y-8">
-              <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                  {user ? (userProfile?.subscription_tier === 'premium' ? 'Premium AI Advisor' : 'Free Analysis + Premium Available') : 'Free Financial Analysis'}
-                </div>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
-                  Smart Financial
-                  <span className="text-primary"> Decision Tool</span>
-                </h1>
-                <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-                  Make informed choices about housing, cars, education, and major life changes with {user && userProfile?.subscription_tier === 'premium' ? 'AI-powered insights and' : ''} personalized recommendations.
-                </p>
-              </div>
-              
-              {user && userProfile?.subscription_tier === 'premium' && (
-                <div className="flex items-center space-x-2 mb-4">
-                  <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
-                    Premium Member
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">AI advisor included</span>
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border">
-                  <Calculator className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium">Budget Analysis</span>
-                </div>
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border">
-                  <TrendingUp className="w-4 h-4 text-secondary" />
-                  <span className="text-sm font-medium">Smart Recommendations</span>
-                </div>
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border">
-                  <Shield className="w-4 h-4 text-accent" />
-                  <span className="text-sm font-medium">{user ? 'Secure Data Storage' : 'Privacy Protected'}</span>
-                </div>
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border">
-                  <MessageCircle className="w-4 h-4 text-warning" />
-                  <span className="text-sm font-medium">AI Financial Advisor</span>
-                </div>
-              </div>
-
-              {!user && (
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button asChild size="lg" className="flex-1">
-                    <a href="/auth">Sign Up Free</a>
-                  </Button>
-                  <Button variant="outline" size="lg" className="flex-1">
-                    Try Demo Below
-                  </Button>
-                </div>
-              )}
+      <section className="relative px-6 py-20">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-12 items-center">
+          <div className="text-white space-y-8">
+            <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
+              Smart Financial
+              <span className="text-purple-400"> Decisions</span>
+              <br />Made Simple
+            </h1>
+            <p className="text-xl text-gray-300 leading-relaxed">
+              Take control of your finances with AI-powered insights. Make informed decisions about budgeting, investments, and major purchases with personalized recommendations.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4">
+              <Button 
+                size="lg" 
+                className="bg-purple-600 hover:bg-purple-700 text-white px-8 py-4"
+                asChild
+              >
+                <Link to="/auth">
+                  Start Free Analysis
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="text-white border-white hover:bg-white hover:text-purple-900 px-8 py-4">
+                Learn More
+              </Button>
             </div>
-            
-            <div className="relative order-first lg:order-last">
-              <div className="relative rounded-2xl overflow-hidden shadow-elevated">
-                <img 
-                  src={heroImage} 
-                  alt="Professional financial planning and budget analysis dashboard" 
-                  className="w-full h-auto"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/20 via-transparent to-transparent"></div>
-              </div>
+          </div>
+          <div className="relative">
+            <img 
+              src={heroImage} 
+              alt="Financial dashboard and analytics" 
+              className="rounded-2xl shadow-2xl"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="px-6 py-20">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-white mb-4">
+              Everything You Need for Smart Financial Decisions
+            </h2>
+            <p className="text-xl text-gray-300">
+              Comprehensive tools and AI-powered insights to guide your financial journey
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {features.map((feature, index) => (
+              <Card key={index} className="bg-white/10 backdrop-blur-sm border-white/20 hover:bg-white/20 transition-all duration-300">
+                <CardHeader className="text-center">
+                  <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+                    <feature.icon className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <CardTitle className="text-white">{feature.title}</CardTitle>
+                  <CardDescription className="text-gray-300">
+                    {feature.description}
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof */}
+      <section className="px-6 py-16">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="flex justify-center items-center gap-8 text-white">
+            <div className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-purple-400" />
+              <span>10,000+ users</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-purple-400" />
+              <span>50,000+ decisions analyzed</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Shield className="w-5 h-5 text-purple-400" />
+              <span>Bank-level security</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 sm:py-8">
-        {!user ? (
-          /* Guest Experience */
-          <div className="space-y-8">
-            {/* Social Proof */}
-            <div className="text-center py-8">
-              <div className="flex justify-center items-center gap-8 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  <span>10,000+ users</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4" />
-                  <span>50,000+ decisions analyzed</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4" />
-                  <span>Bank-level security</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Sign Up CTA */}
-            <Card className="max-w-2xl mx-auto border-2 border-dashed border-primary/20">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Get Started Today</CardTitle>
-                <CardDescription>
-                  Sign up to save your budget data, access premium AI features, and track your financial progress over time.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid sm:grid-cols-3 gap-4 mb-6">
-                  <div className="text-center">
-                    <DollarSign className="w-8 h-8 text-primary mx-auto mb-2" />
-                    <h4 className="font-medium">Budget Tracking</h4>
-                    <p className="text-xs text-muted-foreground">Save and track your financial data</p>
-                  </div>
-                  <div className="text-center">
-                    <Target className="w-8 h-8 text-primary mx-auto mb-2" />
-                    <h4 className="font-medium">Decision History</h4>
-                    <p className="text-xs text-muted-foreground">Track all your financial decisions</p>
-                  </div>
-                  <div className="text-center">
-                    <MessageCircle className="w-8 h-8 text-primary mx-auto mb-2" />
-                    <h4 className="font-medium">AI Advisor</h4>
-                    <p className="text-xs text-muted-foreground">Get personalized advice</p>
-                  </div>
-                </div>
-                <Button asChild className="w-full" size="lg">
-                  <a href="/auth">Sign Up Free</a>
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Demo Form */}
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-semibold mb-2">Try the Calculator (Demo Mode)</h3>
-                <p className="text-muted-foreground">Experience our financial analysis tool - no account required</p>
-              </div>
-              
-              <div className="grid lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-8">
-                  {showCalculator && budget && (
-                    <BudgetOverview budget={budget} />
-                  )}
-                  
-                  <BudgetForm 
-                    onBudgetUpdate={handleBudgetUpdate} 
-                    initialBudget={budget || undefined}
-                  />
-                  
-                  {showCalculator && budget && (
-                    <DecisionCalculator budget={budget} />
-                  )}
-                </div>
-                
-                <div>
-                  <PremiumUpgrade />
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          /* Authenticated User Experience */
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-8">
-              {loadingBudget ? (
-                <Card>
-                  <CardContent className="flex items-center justify-center py-8">
-                    <div className="text-center">
-                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                      <p className="text-sm text-muted-foreground">Loading your budget...</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <>
-                  {showCalculator && budget && (
-                    <BudgetOverview budget={budget} />
-                  )}
-                  
-                  <BudgetForm 
-                    onBudgetUpdate={handleBudgetUpdate} 
-                    initialBudget={budget || undefined}
-                  />
-                  
-                  {showCalculator && budget && (
-                    <DecisionCalculator budget={budget} />
-                  )}
-                </>
-              )}
-            </div>
-
-            <div className="space-y-6">
-              {/* Premium Features */}
-              {userProfile?.subscription_tier === 'premium' ? (
-                <AIChat budgetData={budget} />
-              ) : (
-                <PremiumUpgrade onUpgrade={handlePremiumUpgrade} />
-              )}
-
-              {/* How It Works */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">How It Works</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-primary">1</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm">Enter Your Budget</h4>
-                      <p className="text-xs text-muted-foreground">Your data is securely saved for future use</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-primary">2</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm">Analyze Decisions</h4>
-                      <p className="text-xs text-muted-foreground">Get instant affordability insights</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-primary">3</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm">Get AI Advice</h4>
-                      <p className="text-xs text-muted-foreground">Chat with AI for personalized guidance</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
-
-        {/* Features Section */}
-        {!showCalculator && (
-          <section className="py-8 sm:py-12 mt-16">
-            <div className="text-center mb-8 sm:mb-12">
-              <h3 className="text-2xl sm:text-3xl font-bold mb-4">Comprehensive Financial Analysis</h3>
-              <p className="text-muted-foreground max-w-2xl mx-auto text-sm sm:text-base">
-                Get data-driven insights for major life decisions. Our tool analyzes your complete financial picture.
+      {/* Benefits Section */}
+      <section className="px-6 py-20">
+        <div className="max-w-4xl mx-auto">
+          <h3 className="text-3xl font-bold text-white text-center mb-12">
+            Why Choose FinanceAI?
+          </h3>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <DollarSign className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+              <h4 className="text-xl font-semibold text-white mb-2">Budget Tracking</h4>
+              <p className="text-gray-300">
+                Save and track your financial data securely with automatic insights and recommendations.
               </p>
             </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              <div className="text-center p-4 sm:p-6 bg-card/95 backdrop-blur-sm rounded-xl shadow-card border-0 hover:shadow-elevated transition-all duration-200 group">
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
-                  <span className="text-primary font-bold text-lg">1</span>
-                </div>
-                <h4 className="font-semibold mb-2 text-sm sm:text-base">Enter Your Budget</h4>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Input your income, expenses, savings, and emergency fund details
-                </p>
-              </div>
-              
-              <div className="text-center p-4 sm:p-6 bg-card/95 backdrop-blur-sm rounded-xl shadow-card border-0 hover:shadow-elevated transition-all duration-200 group">
-                <div className="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-secondary/20 transition-colors">
-                  <span className="text-secondary font-bold text-lg">2</span>
-                </div>
-                <h4 className="font-semibold mb-2 text-sm sm:text-base">Select Decision Type</h4>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Choose from housing, vehicle, education, or relocation analysis
-                </p>
-              </div>
-              
-              <div className="text-center p-4 sm:p-6 bg-card/95 backdrop-blur-sm rounded-xl shadow-card border-0 hover:shadow-elevated transition-all duration-200 group">
-                <div className="w-12 h-12 bg-accent/10 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-accent/20 transition-colors">
-                  <span className="text-accent font-bold text-lg">3</span>
-                </div>
-                <h4 className="font-semibold mb-2 text-sm sm:text-base">Get Deep Analysis</h4>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Receive detailed impact assessment with risk analysis and alternatives
-                </p>
-              </div>
-              
-              <div className="text-center p-4 sm:p-6 bg-card/95 backdrop-blur-sm rounded-xl shadow-card border-0 hover:shadow-elevated transition-all duration-200 group">
-                <div className="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-warning/20 transition-colors">
-                  <span className="text-warning font-bold text-lg">4</span>
-                </div>
-                <h4 className="font-semibold mb-2 text-sm sm:text-base">Make Smart Decisions</h4>
-                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
-                  Use insights and recommendations to make confident financial choices
-                </p>
-              </div>
+            <div className="text-center">
+              <Target className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+              <h4 className="text-xl font-semibold text-white mb-2">Decision History</h4>
+              <p className="text-gray-300">
+                Track all your financial decisions and see how they impact your overall financial health.
+              </p>
             </div>
-          </section>
-        )}
-      </main>
+            <div className="text-center">
+              <MessageCircle className="w-12 h-12 text-purple-400 mx-auto mb-4" />
+              <h4 className="text-xl font-semibold text-white mb-2">AI Advisor</h4>
+              <p className="text-gray-300">
+                Get personalized advice from our AI financial advisor based on your unique situation.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Call to Action */}
+      <section className="px-6 py-20 text-center">
+        <div className="max-w-4xl mx-auto">
+          <h2 className="text-4xl font-bold text-white mb-6">
+            Ready to Transform Your Financial Future?
+          </h2>
+          <p className="text-xl text-gray-300 mb-8">
+            Join thousands of users who have already improved their financial health with AI-powered insights.
+          </p>
+          <Button 
+            size="lg" 
+            className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white px-12 py-4 text-lg"
+            asChild
+          >
+            <Link to="/auth">
+              Get Started Today
+            </Link>
+          </Button>
+        </div>
+      </section>
 
       {/* Footer */}
-      <footer className="border-t bg-card/95 backdrop-blur-sm mt-16">
-        <div className="container mx-auto px-4 py-6 sm:py-8">
-          <div className="text-center space-y-2">
-            <p className="text-sm text-muted-foreground">
-              &copy; 2024 Smart Financial Decision Tool. Empowering informed financial choices.
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {user && userProfile?.subscription_tier === 'premium' ? 
-                'Premium AI-powered financial analysis' : 
-                'Free financial analysis tool with premium AI features available'
-              }
-            </p>
-          </div>
+      <footer className="px-6 py-8 border-t border-white/10">
+        <div className="max-w-7xl mx-auto text-center text-gray-400">
+          <p>&copy; 2024 FinanceAI. All rights reserved.</p>
         </div>
       </footer>
     </div>
   );
-};
-
-export default Index;
+}

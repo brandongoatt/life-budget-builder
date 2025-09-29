@@ -14,8 +14,6 @@ export default function PremiumUpgrade({ onUpgrade }: PremiumUpgradeProps) {
 
   const handleUpgrade = async () => {
     try {
-      // SECURITY FIX: Remove direct database manipulation
-      // In a real app, this would redirect to Stripe payment
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         toast({
@@ -26,22 +24,22 @@ export default function PremiumUpgrade({ onUpgrade }: PremiumUpgradeProps) {
         return;
       }
 
-      // For demo purposes only - simulate payment processing
-      // In production, this would be handled by Stripe webhooks
-      toast({
-        title: "Demo Mode",
-        description: "In production, this would redirect to Stripe for secure payment processing.",
-        variant: "default",
-      });
+      // Demo upgrade - update user profile to premium
+      const { error } = await supabase
+        .from('profiles')
+        .update({ subscription_tier: 'premium' })
+        .eq('user_id', user.id);
 
-      // Simulate successful upgrade for demo
-      setTimeout(() => {
-        toast({
-          title: "Premium Upgrade Simulated",
-          description: "In production, premium access would be granted after successful payment.",
-        });
-        onUpgrade?.();
-      }, 2000);
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Upgraded to Premium!",
+        description: "You now have access to all premium features.",
+      });
+      
+      onUpgrade?.();
       
     } catch (error) {
       console.error('Upgrade error:', error);
