@@ -3,8 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Send, Bot, User, Crown } from 'lucide-react';
+import { Send, Bot, User } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -157,16 +156,10 @@ export default function AIChat({ budgetData }: AIChatProps) {
   return (
     <Card className="h-[600px] flex flex-col">
       <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Bot className="h-5 w-5" />
-            AI Financial Advisor
-          </CardTitle>
-          <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
-            <Crown className="w-3 h-3 mr-1" />
-            Premium
-          </Badge>
-        </div>
+        <CardTitle className="flex items-center gap-2">
+          <Bot className="h-5 w-5" />
+          AI Financial Advisor
+        </CardTitle>
       </CardHeader>
       
       <CardContent className="flex-1 flex flex-col p-0">

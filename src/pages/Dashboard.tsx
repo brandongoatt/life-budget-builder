@@ -3,17 +3,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Crown, LogOut, Plus, TrendingUp, DollarSign, PiggyBank, Shield } from 'lucide-react';
+import { LogOut, Plus, TrendingUp, DollarSign, PiggyBank, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { BudgetForm } from '@/components/BudgetForm';
 import { BudgetOverview } from '@/components/BudgetOverview';
-import PremiumUpgrade from '@/components/PremiumUpgrade';
 import AIChat from '@/components/AIChat';
 import { useNavigate } from 'react-router-dom';
 
 interface UserProfile {
-  subscription_tier: string;
   display_name: string;
 }
 
@@ -51,7 +48,7 @@ export default function Dashboard() {
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('subscription_tier, display_name')
+        .select('display_name')
         .eq('user_id', user.id)
         .single();
 
@@ -107,9 +104,6 @@ export default function Dashboard() {
     });
   };
 
-  const handleUpgrade = () => {
-    fetchProfile();
-  };
 
   if (loading) {
     return (
@@ -119,20 +113,12 @@ export default function Dashboard() {
     );
   }
 
-  const isPremium = profile?.subscription_tier === 'premium';
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-muted">
       <header className="border-b bg-card/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
           <div className="flex items-center gap-4">
             <h1 className="text-2xl font-bold">Financial Dashboard</h1>
-            {isPremium && (
-              <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
-                <Crown className="w-3 h-3 mr-1" />
-                Premium
-              </Badge>
-            )}
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
@@ -201,14 +187,11 @@ export default function Dashboard() {
               </Card>
             )}
 
-            {/* AI Chat Section - Premium Only */}
-            {isPremium && budget && (
+            {/* AI Chat Section */}
+            {budget && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Crown className="w-5 h-5 text-yellow-500" />
-                    AI Financial Advisor
-                  </CardTitle>
+                  <CardTitle>AI Financial Advisor</CardTitle>
                   <CardDescription>
                     Get personalized financial advice based on your budget
                   </CardDescription>
@@ -266,11 +249,6 @@ export default function Dashboard() {
                   </CardContent>
                 </Card>
               </div>
-            )}
-
-            {/* Premium Upgrade */}
-            {!isPremium && (
-              <PremiumUpgrade onUpgrade={handleUpgrade} />
             )}
           </div>
         </div>
