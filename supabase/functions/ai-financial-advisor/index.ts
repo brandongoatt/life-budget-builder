@@ -16,23 +16,6 @@ serve(async (req) => {
   try {
     const { message, budget_data } = await req.json();
     
-    // SECURITY: Input validation and sanitization
-    if (!message || typeof message !== 'string') {
-      throw new Error('Invalid message format');
-    }
-    
-    if (message.length > 1000) {
-      throw new Error('Message too long (max 1000 characters)');
-    }
-    
-    // Sanitize message - remove potentially harmful content
-    const sanitizedMessage = message.trim().slice(0, 1000);
-    
-    // Validate budget_data if provided
-    if (budget_data && typeof budget_data !== 'object') {
-      throw new Error('Invalid budget data format');
-    }
-    
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAIApiKey) {
       throw new Error('OPENAI_API_KEY is not set');
@@ -75,7 +58,7 @@ Always:
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
-          { role: 'user', content: sanitizedMessage }
+          { role: 'user', content: message }
         ],
         max_tokens: 500,
         temperature: 0.7,

@@ -5,15 +5,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Calculator, DollarSign, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { z } from "zod";
-
-// SECURITY: Input validation schema
-const budgetSchema = z.object({
-  monthlyIncome: z.number().min(0.01, "Income must be greater than 0").max(10000000, "Income too large"),
-  monthlyExpenses: z.number().min(0, "Expenses cannot be negative").max(10000000, "Expenses too large"),
-  savings: z.number().min(0, "Savings cannot be negative").max(100000000, "Savings amount too large"),
-  emergencyFund: z.number().min(0, "Emergency fund cannot be negative").max(100000000, "Emergency fund too large"),
-});
 
 interface BudgetData {
   monthlyIncome: number;
@@ -36,43 +27,36 @@ export const BudgetForm = ({ onBudgetUpdate, initialBudget }: BudgetFormProps) =
   const { toast } = useToast();
 
   const validateInputs = () => {
-    try {
-      const budgetData = {
-        monthlyIncome: parseFloat(income) || 0,
-        monthlyExpenses: parseFloat(expenses) || 0,
-        savings: parseFloat(savings) || 0,
-        emergencyFund: parseFloat(emergencyFund) || 0,
-      };
-
-      // SECURITY: Use Zod validation
-      budgetSchema.parse(budgetData);
-
-      // Additional business logic validation
-      if (budgetData.monthlyExpenses >= budgetData.monthlyIncome) {
-        toast({
-          title: "Budget Warning",
-          description: "Your expenses are equal to or exceed your income. Consider reviewing your budget.",
-          variant: "destructive",
-        });
-      }
-
-      return true;
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        toast({
-          title: "Invalid Input",
-          description: error.issues[0]?.message || "Please check your input values.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Validation Error",
-          description: "Please check your input values.",
-          variant: "destructive",
-        });
-      }
+    const incomeNum = parseFloat(income) || 0;
+    const expensesNum = parseFloat(expenses) || 0;
+    
+    if (incomeNum <= 0) {
+      toast({
+        title: "Invalid Income",
+        description: "Please enter a valid monthly income greater than 0.",
+        variant: "destructive",
+      });
       return false;
     }
+    
+    if (expensesNum < 0) {
+      toast({
+        title: "Invalid Expenses",
+        description: "Monthly expenses cannot be negative.",
+        variant: "destructive",
+      });
+      return false;
+    }
+    
+    if (expensesNum >= incomeNum) {
+      toast({
+        title: "Budget Warning",
+        description: "Your expenses are equal to or exceed your income. Consider reviewing your budget.",
+        variant: "destructive",
+      });
+    }
+    
+    return true;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -14,33 +14,24 @@ export default function PremiumUpgrade({ onUpgrade }: PremiumUpgradeProps) {
 
   const handleUpgrade = async () => {
     try {
+      // For demo purposes, we'll just update the user's tier to premium
+      // In a real app, this would integrate with Stripe
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast({
-          title: "Authentication required",
-          description: "Please sign in to upgrade to premium.",
-          variant: "destructive",
-        });
-        return;
-      }
+      if (!user) return;
 
-      // Demo upgrade - update user profile to premium
       const { error } = await supabase
         .from('profiles')
         .update({ subscription_tier: 'premium' })
         .eq('user_id', user.id);
 
-      if (error) {
-        throw error;
-      }
+      if (error) throw error;
 
       toast({
-        title: "Upgraded to Premium!",
-        description: "You now have access to all premium features.",
+        title: "Welcome to Premium!",
+        description: "You now have access to AI financial advice and advanced features.",
       });
-      
+
       onUpgrade?.();
-      
     } catch (error) {
       console.error('Upgrade error:', error);
       toast({
