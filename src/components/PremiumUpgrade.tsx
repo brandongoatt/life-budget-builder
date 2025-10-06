@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Check, Crown, MessageCircle, TrendingUp, Shield, Zap } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useNavigate } from 'react-router-dom';
 
 interface PremiumUpgradeProps {
   onUpgrade?: () => void;
@@ -11,35 +12,10 @@ interface PremiumUpgradeProps {
 
 export default function PremiumUpgrade({ onUpgrade }: PremiumUpgradeProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleUpgrade = async () => {
-    try {
-      // For demo purposes, we'll just update the user's tier to premium
-      // In a real app, this would integrate with Stripe
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const { error } = await supabase
-        .from('profiles')
-        .update({ subscription_tier: 'premium' })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Welcome to Premium!",
-        description: "You now have access to AI financial advice and advanced features.",
-      });
-
-      onUpgrade?.();
-    } catch (error) {
-      console.error('Upgrade error:', error);
-      toast({
-        title: "Upgrade failed",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
-    }
+    navigate('/under-construction');
   };
 
   const features = [

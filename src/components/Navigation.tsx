@@ -70,7 +70,7 @@ export default function Navigation({ userProfile }: NavigationProps) {
             </>
           ) : (
             <Button asChild>
-              <Link to="/auth">Sign In</Link>
+              <Link to="/under-construction">Sign In</Link>
             </Button>
           )}
         </div>
