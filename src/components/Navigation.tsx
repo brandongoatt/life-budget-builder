@@ -23,9 +23,12 @@ export default function Navigation({ userProfile }: NavigationProps) {
   return (
     <nav className="bg-card border-b border-border px-4 py-3">
       <div className="max-w-7xl mx-auto flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <Calculator className="h-6 w-6 text-primary" />
-          <h1 className="text-xl font-bold text-foreground">Financial Advisor</h1>
+        <div className="flex flex-col">
+          <div className="flex items-center space-x-2">
+            <Calculator className="h-6 w-6 text-primary" />
+            <h1 className="text-xl font-bold text-foreground">Life Budget Builder</h1>
+          </div>
+          <p className="text-xs text-muted-foreground ml-8">Build Your Future, One Decision at a Time</p>
         </div>
         
         <div className="flex items-center space-x-4">
