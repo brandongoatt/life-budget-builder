@@ -161,59 +161,67 @@ const Index = () => {
       <Navigation userProfile={userProfile} />
 
       {/* Hero Section */}
-      <section className="relative py-8 sm:py-16 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-secondary/5"></div>
+      <section className="relative py-12 sm:py-20 overflow-hidden">
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-1/4 -left-32 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 -right-32 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        </div>
+        
         <div className="container mx-auto px-4 relative">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            <div className="space-y-6 lg:space-y-8">
-              <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
-                  <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
-                  {user ? (userProfile?.subscription_tier === 'premium' ? 'Premium AI Advisor' : 'Free Analysis + Premium Available') : 'Free Financial Analysis'}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            <div className="space-y-8 text-center lg:text-left">
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full gradient-primary text-primary-foreground text-sm font-semibold shadow-lg">
+                  <div className="w-2 h-2 bg-primary-foreground rounded-full animate-pulse"></div>
+                  {user ? (userProfile?.subscription_tier === 'premium' ? '✨ Premium AI Advisor Active' : '🚀 Upgrade to Premium') : '💡 Free Financial Analysis'}
                 </div>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
+                
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight">
                   Smart Financial
-                  <span className="text-primary"> Decision Tool</span>
+                  <span className="block gradient-primary bg-clip-text text-transparent mt-2">Decision Making</span>
                 </h1>
-                <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-                  Make informed choices about housing, cars, education, and major life changes with {user && userProfile?.subscription_tier === 'premium' ? 'AI-powered insights and' : ''} personalized recommendations.
+                
+                <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-xl mx-auto lg:mx-0">
+                  Make confident choices about housing, cars, education, and major life changes with {user && userProfile?.subscription_tier === 'premium' ? 'AI-powered insights and' : ''} data-driven recommendations.
                 </p>
               </div>
-              
-              {user && userProfile?.subscription_tier === 'premium' && (
-                <div className="flex items-center space-x-2 mb-4">
-                  <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
-                    Premium Member
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">AI advisor included</span>
-                </div>
-              )}
 
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border">
-                  <Calculator className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium">Budget Analysis</span>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-3 p-4 rounded-xl gradient-card border border-primary/20 shadow-card hover:shadow-elevated transition-all group">
+                  <div className="w-10 h-10 gradient-primary rounded-lg flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform">
+                    <Calculator className="w-5 h-5 text-primary-foreground" />
+                  </div>
+                  <span className="text-sm font-semibold">Budget Analysis</span>
                 </div>
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border">
-                  <TrendingUp className="w-4 h-4 text-secondary" />
-                  <span className="text-sm font-medium">Smart Recommendations</span>
+                
+                <div className="flex items-center gap-3 p-4 rounded-xl gradient-card border border-secondary/20 shadow-card hover:shadow-elevated transition-all group">
+                  <div className="w-10 h-10 gradient-secondary rounded-lg flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform">
+                    <TrendingUp className="w-5 h-5 text-secondary-foreground" />
+                  </div>
+                  <span className="text-sm font-semibold">Smart Insights</span>
                 </div>
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border">
-                  <Shield className="w-4 h-4 text-accent" />
-                  <span className="text-sm font-medium">{user ? 'Secure Data Storage' : 'Privacy Protected'}</span>
+                
+                <div className="flex items-center gap-3 p-4 rounded-xl gradient-card border border-accent/20 shadow-card hover:shadow-elevated transition-all group">
+                  <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center shadow-glow group-hover:scale-110 transition-transform">
+                    <Shield className="w-5 h-5 text-accent-foreground" />
+                  </div>
+                  <span className="text-sm font-semibold">Secure & Private</span>
                 </div>
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-card/50 border">
-                  <MessageCircle className="w-4 h-4 text-warning" />
-                  <span className="text-sm font-medium">AI Financial Advisor</span>
+                
+                <div className="flex items-center gap-3 p-4 rounded-xl gradient-card border border-warning/20 shadow-card hover:shadow-elevated transition-all group">
+                  <div className="w-10 h-10 gradient-premium rounded-lg flex items-center justify-center shadow-premium group-hover:scale-110 transition-transform">
+                    <MessageCircle className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-sm font-semibold">AI Advisor</span>
                 </div>
               </div>
 
               {!user && (
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button asChild size="lg" className="flex-1">
-                    <a href="/auth">Sign Up Free</a>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                  <Button asChild size="lg" className="gradient-primary shadow-glow text-primary-foreground font-semibold">
+                    <a href="/auth">Get Started Free</a>
                   </Button>
-                  <Button variant="outline" size="lg" className="flex-1">
+                  <Button variant="outline" size="lg" className="border-2">
                     Try Demo Below
                   </Button>
                 </div>
@@ -221,13 +229,28 @@ const Index = () => {
             </div>
             
             <div className="relative order-first lg:order-last">
-              <div className="relative rounded-2xl overflow-hidden shadow-elevated">
+              <div className="relative rounded-2xl overflow-hidden shadow-elevated hover:shadow-glow transition-all duration-500 border-2 border-primary/20">
                 <img 
                   src={heroImage} 
-                  alt="Professional financial planning and budget analysis dashboard" 
+                  alt="Modern financial planning visualization with growth charts and analytics" 
                   className="w-full h-auto"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-primary/20 via-transparent to-transparent"></div>
+              </div>
+              
+              {/* Floating Stats */}
+              <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-11/12 grid grid-cols-3 gap-3 lg:hidden">
+                <div className="bg-card/95 backdrop-blur-sm rounded-lg p-3 shadow-card text-center border">
+                  <div className="text-xl font-bold text-primary">10K+</div>
+                  <div className="text-xs text-muted-foreground">Users</div>
+                </div>
+                <div className="bg-card/95 backdrop-blur-sm rounded-lg p-3 shadow-card text-center border">
+                  <div className="text-xl font-bold text-secondary">50K+</div>
+                  <div className="text-xs text-muted-foreground">Decisions</div>
+                </div>
+                <div className="bg-card/95 backdrop-blur-sm rounded-lg p-3 shadow-card text-center border">
+                  <div className="text-xl font-bold text-accent">98%</div>
+                  <div className="text-xs text-muted-foreground">Satisfied</div>
+                </div>
               </div>
             </div>
           </div>
@@ -235,65 +258,90 @@ const Index = () => {
       </section>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-6 sm:py-8">
+      <main className="container mx-auto px-4 py-12 sm:py-16">
         {!user ? (
           /* Guest Experience */
-          <div className="space-y-8">
+          <div className="space-y-12">
             {/* Social Proof */}
             <div className="text-center py-8">
-              <div className="flex justify-center items-center gap-8 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Users className="w-4 h-4" />
-                  <span>10,000+ users</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto">
+                <div className="flex flex-col items-center gap-3 p-6 rounded-xl gradient-card border shadow-card hover:shadow-elevated transition-all">
+                  <div className="w-12 h-12 gradient-primary rounded-full flex items-center justify-center shadow-glow">
+                    <Users className="w-6 h-6 text-primary-foreground" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">10,000+</div>
+                    <div className="text-sm text-muted-foreground">Active Users</div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4" />
-                  <span>50,000+ decisions analyzed</span>
+                <div className="flex flex-col items-center gap-3 p-6 rounded-xl gradient-card border shadow-card hover:shadow-elevated transition-all">
+                  <div className="w-12 h-12 gradient-secondary rounded-full flex items-center justify-center shadow-glow">
+                    <BarChart3 className="w-6 h-6 text-secondary-foreground" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">50,000+</div>
+                    <div className="text-sm text-muted-foreground">Decisions Analyzed</div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Shield className="w-4 h-4" />
-                  <span>Bank-level security</span>
+                <div className="flex flex-col items-center gap-3 p-6 rounded-xl gradient-card border shadow-card hover:shadow-elevated transition-all">
+                  <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center shadow-glow">
+                    <Shield className="w-6 h-6 text-accent-foreground" />
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold">Bank-Level</div>
+                    <div className="text-sm text-muted-foreground">Security</div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Sign Up CTA */}
-            <Card className="max-w-2xl mx-auto border-2 border-dashed border-primary/20">
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Get Started Today</CardTitle>
-                <CardDescription>
+            <Card className="max-w-3xl mx-auto border-2 border-primary/30 shadow-elevated hover:shadow-glow transition-all duration-300 gradient-card">
+              <CardHeader className="text-center space-y-4">
+                <CardTitle className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  Get Started Today
+                </CardTitle>
+                <CardDescription className="text-base">
                   Sign up to save your budget data, access premium AI features, and track your financial progress over time.
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid sm:grid-cols-3 gap-4 mb-6">
-                  <div className="text-center">
-                    <DollarSign className="w-8 h-8 text-primary mx-auto mb-2" />
-                    <h4 className="font-medium">Budget Tracking</h4>
-                    <p className="text-xs text-muted-foreground">Save and track your financial data</p>
+                <div className="grid sm:grid-cols-3 gap-6 mb-8">
+                  <div className="text-center p-4 rounded-xl bg-primary/5 border border-primary/20 hover:border-primary/40 transition-all">
+                    <div className="w-12 h-12 gradient-primary rounded-full flex items-center justify-center mx-auto mb-3 shadow-glow">
+                      <DollarSign className="w-6 h-6 text-primary-foreground" />
+                    </div>
+                    <h4 className="font-semibold mb-2">Budget Tracking</h4>
+                    <p className="text-sm text-muted-foreground">Save and track your financial data securely</p>
                   </div>
-                  <div className="text-center">
-                    <Target className="w-8 h-8 text-primary mx-auto mb-2" />
-                    <h4 className="font-medium">Decision History</h4>
-                    <p className="text-xs text-muted-foreground">Track all your financial decisions</p>
+                  <div className="text-center p-4 rounded-xl bg-secondary/5 border border-secondary/20 hover:border-secondary/40 transition-all">
+                    <div className="w-12 h-12 gradient-secondary rounded-full flex items-center justify-center mx-auto mb-3 shadow-glow">
+                      <Target className="w-6 h-6 text-secondary-foreground" />
+                    </div>
+                    <h4 className="font-semibold mb-2">Decision History</h4>
+                    <p className="text-sm text-muted-foreground">Track all your financial decisions</p>
                   </div>
-                  <div className="text-center">
-                    <MessageCircle className="w-8 h-8 text-primary mx-auto mb-2" />
-                    <h4 className="font-medium">AI Advisor</h4>
-                    <p className="text-xs text-muted-foreground">Get personalized advice</p>
+                  <div className="text-center p-4 rounded-xl bg-accent/5 border border-accent/20 hover:border-accent/40 transition-all">
+                    <div className="w-12 h-12 gradient-premium rounded-full flex items-center justify-center mx-auto mb-3 shadow-premium">
+                      <MessageCircle className="w-6 h-6 text-white" />
+                    </div>
+                    <h4 className="font-semibold mb-2">AI Advisor</h4>
+                    <p className="text-sm text-muted-foreground">Get personalized financial advice</p>
                   </div>
                 </div>
-                <Button asChild className="w-full" size="lg">
-                  <a href="/auth">Sign Up Free</a>
+                <Button asChild className="w-full gradient-primary text-primary-foreground font-semibold shadow-glow" size="lg">
+                  <a href="/auth">Sign Up Free - No Credit Card Required</a>
                 </Button>
               </CardContent>
             </Card>
 
             {/* Demo Form */}
-            <div className="max-w-4xl mx-auto">
-              <div className="text-center mb-6">
-                <h3 className="text-xl font-semibold mb-2">Try the Calculator (Demo Mode)</h3>
-                <p className="text-muted-foreground">Experience our financial analysis tool - no account required</p>
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-8 space-y-3">
+                <h3 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  Try the Calculator
+                </h3>
+                <p className="text-muted-foreground text-lg">Experience our financial analysis tool - no account required</p>
               </div>
               
               <div className="grid lg:grid-cols-3 gap-8">
