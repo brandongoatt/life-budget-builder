@@ -42,10 +42,10 @@ export default function PremiumUpgrade({ onUpgrade }: PremiumUpgradeProps) {
   ];
 
   return (
-    <Card className="border-2 border-primary shadow-premium hover:shadow-glow transition-all duration-300">
+    <Card className="border-2 border-gradient-to-r from-yellow-400 to-orange-500">
       <CardHeader className="text-center pb-4">
         <div className="flex justify-center mb-2">
-          <Badge className="gradient-premium text-white px-3 py-1 shadow-md">
+          <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1">
             <Crown className="w-4 h-4 mr-1" />
             Premium
           </Badge>
@@ -78,7 +78,7 @@ export default function PremiumUpgrade({ onUpgrade }: PremiumUpgradeProps) {
           <p className="text-sm text-muted-foreground">Cancel anytime</p>
         </div>
         
-        <Button onClick={handleUpgrade} className="w-full gradient-premium hover:shadow-premium text-white font-semibold">
+        <Button onClick={handleUpgrade} className="w-full bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white">
           <Crown className="w-4 h-4 mr-2" />
           Upgrade to Premium
         </Button>
