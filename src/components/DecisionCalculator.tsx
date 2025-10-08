@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Home, Car, GraduationCap, MapPin, Calculator, TrendingUp, AlertTriangle, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import { 
   calculateRentImpact, 
   calculateCarImpact, 
@@ -47,6 +49,7 @@ export const DecisionCalculator = ({ budget }: DecisionCalculatorProps) => {
   const [downPayment, setDownPayment] = useState("");
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const decisionTypes = [
     { value: "rent", label: "Housing & Rent", icon: Home, description: "Analyze rental costs and housing decisions" },
@@ -57,7 +60,7 @@ export const DecisionCalculator = ({ budget }: DecisionCalculatorProps) => {
 
   const disposableIncome = budget.monthlyIncome - budget.monthlyExpenses;
 
-  const calculateImpact = () => {
+  const calculateImpact = async () => {
     if (!amount && !monthlyPayment) {
       toast({
         title: "Missing Information",
@@ -93,9 +96,43 @@ export const DecisionCalculator = ({ budget }: DecisionCalculatorProps) => {
 
     setResult(analysis);
     
+    // Save decision to database if user is logged in
+    if (user) {
+      try {
+        // Get active budget ID
+        const { data: activeBudget } = await supabase
+          .from('budgets')
+          .select('id')
+          .eq('user_id', user.id)
+          .eq('is_active', true)
+          .single();
+
+        if (activeBudget) {
+          const { error } = await supabase.from('decisions').insert([{
+            user_id: user.id,
+            budget_id: activeBudget.id,
+            decision_type: selectedDecision,
+            decision_data: {
+              amount: amountNum,
+              monthlyPayment: monthlyNum,
+              duration: durationNum,
+              downPayment: downPaymentNum
+            },
+            analysis_result: analysis as any
+          }]);
+          
+          if (error) {
+            console.error('Error saving decision:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error saving decision:', error);
+      }
+    }
+    
     toast({
       title: "Analysis Complete",
-      description: `Your ${decisionTypes.find(t => t.value === selectedDecision)?.label.toLowerCase()} analysis is ready.`,
+      description: `Your ${decisionTypes.find(t => t.value === selectedDecision)?.label.toLowerCase()} analysis is ${user ? 'saved' : 'ready'}.`,
     });
   };
 
