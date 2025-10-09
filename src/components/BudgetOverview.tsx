@@ -19,18 +19,22 @@ export const BudgetOverview = ({ budget }: BudgetOverviewProps) => {
   const emergencyMonths = budget.monthlyExpenses > 0 ? budget.emergencyFund / budget.monthlyExpenses : 0;
   const expenseRatio = budget.monthlyIncome > 0 ? (budget.monthlyExpenses / budget.monthlyIncome) * 100 : 0;
 
+  // Get thresholds from localStorage
+  const savingsThreshold = parseInt(localStorage.getItem('savingsThreshold') || '20');
+  const expenseThreshold = parseInt(localStorage.getItem('expenseThreshold') || '80');
+
   const getHealthStatus = () => {
     let score = 0;
-    if (savingsRate >= 20) score += 3;
-    else if (savingsRate >= 10) score += 2;
-    else if (savingsRate >= 5) score += 1;
+    if (savingsRate >= savingsThreshold) score += 3;
+    else if (savingsRate >= savingsThreshold / 2) score += 2;
+    else if (savingsRate >= savingsThreshold / 4) score += 1;
     
     if (emergencyMonths >= 6) score += 3;
     else if (emergencyMonths >= 3) score += 2;
     else if (emergencyMonths >= 1) score += 1;
     
-    if (expenseRatio <= 70) score += 2;
-    else if (expenseRatio <= 80) score += 1;
+    if (expenseRatio <= expenseThreshold - 10) score += 2;
+    else if (expenseRatio <= expenseThreshold) score += 1;
 
     if (score >= 7) return { color: "text-success", status: "Excellent", bgColor: "bg-success/10" };
     if (score >= 5) return { color: "text-primary", status: "Good", bgColor: "bg-primary/10" };
@@ -41,9 +45,9 @@ export const BudgetOverview = ({ budget }: BudgetOverviewProps) => {
   const healthStatus = getHealthStatus();
 
   const getSavingsRateColor = () => {
-    if (savingsRate >= 20) return "text-success";
-    if (savingsRate >= 10) return "text-primary";
-    if (savingsRate >= 5) return "text-warning";
+    if (savingsRate >= savingsThreshold) return "text-success";
+    if (savingsRate >= savingsThreshold / 2) return "text-primary";
+    if (savingsRate >= savingsThreshold / 4) return "text-warning";
     return "text-destructive";
   };
 
@@ -174,10 +178,10 @@ export const BudgetOverview = ({ budget }: BudgetOverviewProps) => {
               </div>
             </div>
             
-            {savingsRate < 20 && (
+            {savingsRate < savingsThreshold && (
               <div className="p-3 rounded-lg bg-warning/10 border border-warning/20">
                 <p className="text-sm text-warning-foreground">
-                  <strong>Tip:</strong> Aim for a 20% savings rate for optimal financial health.
+                  <strong>Tip:</strong> Aim for a {savingsThreshold}% savings rate for optimal financial health.
                 </p>
               </div>
             )}
@@ -199,13 +203,13 @@ export const BudgetOverview = ({ budget }: BudgetOverviewProps) => {
               </div>
               <div className="flex justify-between text-sm">
                 <span>Expense Ratio</span>
-                <span className={`font-medium ${expenseRatio <= 70 ? 'text-success' : expenseRatio <= 80 ? 'text-warning' : 'text-destructive'}`}>
+                <span className={`font-medium ${expenseRatio <= expenseThreshold - 10 ? 'text-success' : expenseRatio <= expenseThreshold ? 'text-warning' : 'text-destructive'}`}>
                   {expenseRatio.toFixed(1)}%
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Recommended Maximum</span>
-                <span className="font-medium text-muted-foreground">70-80%</span>
+                <span>Your Maximum Threshold</span>
+                <span className="font-medium text-muted-foreground">{expenseThreshold}%</span>
               </div>
             </div>
             

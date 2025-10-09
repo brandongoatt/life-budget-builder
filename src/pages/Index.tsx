@@ -10,6 +10,7 @@ import AIChat from '@/components/AIChat';
 import { AppSidebar } from '@/components/AppSidebar';
 import { FinancialTrends } from '@/components/FinancialTrends';
 import { DecisionHistory } from '@/components/DecisionHistory';
+import { Settings } from '@/components/Settings';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -179,17 +180,7 @@ const Index = () => {
       case 'history':
         return <DecisionHistory />;
       case 'settings':
-        return (
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle>Settings</CardTitle>
-              <CardDescription>Manage your account and preferences</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Settings coming soon...</p>
-            </CardContent>
-          </Card>
-        );
+        return <Settings />;
       default:
         return null;
     }
