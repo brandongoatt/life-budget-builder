@@ -7,6 +7,10 @@ import { BudgetOverview } from '@/components/BudgetOverview';
 import { DecisionCalculator } from '@/components/DecisionCalculator';
 import PremiumUpgrade from '@/components/PremiumUpgrade';
 import AIChat from '@/components/AIChat';
+import { AppSidebar } from '@/components/AppSidebar';
+import { FinancialTrends } from '@/components/FinancialTrends';
+import { DecisionHistory } from '@/components/DecisionHistory';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +37,7 @@ const Index = () => {
   const [showCalculator, setShowCalculator] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loadingBudget, setLoadingBudget] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   // Load user profile and budget data
   useEffect(() => {
@@ -155,6 +160,40 @@ const Index = () => {
       </div>
     );
   }
+
+  const isPremium = userProfile?.subscription_tier === 'premium';
+
+  const renderTabContent = () => {
+    if (!budget) return null;
+
+    switch (activeTab) {
+      case 'dashboard':
+        return (
+          <div className="space-y-8">
+            <BudgetOverview budget={budget} />
+            <DecisionCalculator budget={budget} />
+          </div>
+        );
+      case 'trends':
+        return <FinancialTrends budget={budget} isPremium={isPremium} />;
+      case 'history':
+        return <DecisionHistory />;
+      case 'settings':
+        return (
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle>Settings</CardTitle>
+              <CardDescription>Manage your account and preferences</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Settings coming soon...</p>
+            </CardContent>
+          </Card>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
@@ -319,81 +358,89 @@ const Index = () => {
             </div>
           </div>
         ) : (
-          /* Authenticated User Experience */
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-8">
-              {loadingBudget ? (
-                <Card>
-                  <CardContent className="flex items-center justify-center py-8">
-                    <div className="text-center">
-                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                      <p className="text-sm text-muted-foreground">Loading your budget...</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <>
-                  {showCalculator && budget && (
-                    <BudgetOverview budget={budget} />
-                  )}
-                  
-                  <BudgetForm 
-                    onBudgetUpdate={handleBudgetUpdate} 
-                    initialBudget={budget || undefined}
-                  />
-                  
-                  {showCalculator && budget && (
-                    <DecisionCalculator budget={budget} />
-                  )}
-                </>
-              )}
-            </div>
+          /* Authenticated User Experience with Sidebar */
+          <SidebarProvider>
+            <div className="flex min-h-screen w-full">
+              <AppSidebar 
+                isPremium={isPremium}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+              />
+              
+              <div className="flex-1">
+                <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+                  <div className="flex h-14 items-center gap-4 px-6">
+                    <SidebarTrigger />
+                    <h1 className="text-lg font-semibold">
+                      {activeTab === 'dashboard' && 'Dashboard'}
+                      {activeTab === 'trends' && 'Financial Trends'}
+                      {activeTab === 'history' && 'Decision History'}
+                      {activeTab === 'settings' && 'Settings'}
+                    </h1>
+                  </div>
+                </header>
 
-            <div className="space-y-6">
-              {/* Premium Features */}
-              {userProfile?.subscription_tier === 'premium' ? (
-                <AIChat budgetData={budget} />
-              ) : (
-                <PremiumUpgrade onUpgrade={handlePremiumUpgrade} />
-              )}
+                <main className="p-6">
+                  {loadingBudget ? (
+                    <Card className="shadow-card">
+                      <CardContent className="flex items-center justify-center py-8">
+                        <div className="text-center">
+                          <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                          <p className="text-sm text-muted-foreground">Loading your budget...</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : !budget ? (
+                    <div className="max-w-2xl mx-auto">
+                      <Card className="shadow-card">
+                        <CardHeader>
+                          <CardTitle>Welcome! Let's Get Started</CardTitle>
+                          <CardDescription>
+                            Enter your budget information to start tracking your finances
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <BudgetForm 
+                            onBudgetUpdate={handleBudgetUpdate} 
+                            initialBudget={budget || undefined}
+                          />
+                        </CardContent>
+                      </Card>
+                    </div>
+                  ) : (
+                    <div className="grid lg:grid-cols-3 gap-8">
+                      <div className="lg:col-span-2">
+                        {renderTabContent()}
+                      </div>
 
-              {/* How It Works */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">How It Works</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-primary">1</span>
+                      <div className="space-y-6">
+                        {/* Budget Form Card */}
+                        <Card className="shadow-card">
+                          <CardHeader>
+                            <CardTitle className="text-lg">Update Budget</CardTitle>
+                            <CardDescription>Modify your financial information</CardDescription>
+                          </CardHeader>
+                          <CardContent>
+                            <BudgetForm 
+                              onBudgetUpdate={handleBudgetUpdate} 
+                              initialBudget={budget}
+                            />
+                          </CardContent>
+                        </Card>
+
+                        {/* Premium Features */}
+                        {isPremium ? (
+                          <AIChat budgetData={budget} />
+                        ) : (
+                          <PremiumUpgrade onUpgrade={handlePremiumUpgrade} />
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-medium text-sm">Enter Your Budget</h4>
-                      <p className="text-xs text-muted-foreground">Your data is securely saved for future use</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-primary">2</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm">Analyze Decisions</h4>
-                      <p className="text-xs text-muted-foreground">Get instant affordability insights</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-primary">3</span>
-                    </div>
-                    <div>
-                      <h4 className="font-medium text-sm">Get AI Advice</h4>
-                      <p className="text-xs text-muted-foreground">Chat with AI for personalized guidance</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  )}
+                </main>
+              </div>
             </div>
-          </div>
+          </SidebarProvider>
         )}
 
         {/* Features Section */}
